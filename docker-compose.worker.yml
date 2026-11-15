@@ -9,7 +9,9 @@
 # networks, a VPN): the worker needs the public internet only.
 services:
   worker:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
     command: ["python", "-u", "worker.py"]
     working_dir: /app
     restart: unless-stopped

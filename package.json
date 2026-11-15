@@ -1,0 +1,16 @@
+{
+  "name": "open-clips-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OPEN CLIPS AI — redesigned web app around the OpenShorts video engine",
+  "scripts": {
+    "build": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
+    "start": "node server/index.mjs",
+    "dev": "node server/index.mjs",
+    "engine:up": "docker compose up --build"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
