@@ -180,18 +180,35 @@ export const api = {
       },
     }),
 
-  /** Force a framing strategy without re-cutting. */
-  reframeClip: (body) => request('/api/clip/reframe', { method: 'POST', body }),
+  /** Scene-level crop overrides (fractions of the source width). */
+  reframeClip: ({ jobId, clipIndex, cropOverrides, reapplyCaptions = true }) =>
+    request('/api/clip/reframe', {
+      method: 'POST',
+      body: {
+        job_id: jobId,
+        clip_index: clipIndex,
+        crop_overrides: cropOverrides,
+        reapply_captions: reapplyCaptions,
+      },
+    }),
 
-  /** Burn a different caption style onto an existing clip. */
-  restyleSubtitles: ({ jobId, clipIndex, style }) =>
-    request('/api/subtitle', { method: 'POST', body: { job_id: jobId, clip_index: clipIndex, style } }),
+  /** Burn a built-in caption preset (default|hormozi|pill|lime|oneword|clean). */
+  restyleSubtitles: ({ jobId, clipIndex, preset }) =>
+    request('/api/subtitle', { method: 'POST', body: { job_id: jobId, clip_index: clipIndex, preset } }),
 
   removeSubtitles: ({ jobId, clipIndex }) =>
     request('/api/subtitle/remove', { method: 'POST', body: { job_id: jobId, clip_index: clipIndex } }),
 
-  /** Generate an opening hook for a clip. */
-  generateHook: (body) => request('/api/hook', { method: 'POST', body }),
+  /** Burn a hook line onto a clip — the engine draws the text you send. */
+  applyHook: ({ jobId, clipIndex, text, style = 'pill', position = 'auto' }) =>
+    request('/api/hook', {
+      method: 'POST',
+      body: { job_id: jobId, clip_index: clipIndex, text, style, position },
+    }),
+
+  /** Remove a burned hook from a clip. */
+  removeHook: ({ jobId, clipIndex }) =>
+    request('/api/hook', { method: 'POST', body: { job_id: jobId, clip_index: clipIndex, remove: true } }),
 
   clipTranscript: (jobId, clipIndex) =>
     request(`/api/clip/${encodeURIComponent(jobId)}/${clipIndex}/transcript`),
