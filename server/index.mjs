@@ -470,6 +470,121 @@ async function handleAppApi(req, res, url) {
     }
   }
 
+  // --- campaign research (user's own provider key) -------------------------
+  if (resource === 'research' && method === 'POST') {
+    const key = getSecret('geminiKey');
+    if (!key) {
+      return fail(
+        res,
+        400,
+        'setup_required',
+        'SETUP REQUIRED: add a Gemini API key in Settings → API providers. Research runs on your own key.',
+      );
+    }
+    const body = await readBody(req);
+    const url = str(body.url, 2000);
+    const description = str(body.description, 4000);
+    const title = str(body.title, 200);
+    const audience = str(body.audience, 500);
+    const affiliate = str(body.affiliate, 1000);
+    if (!url && !description) {
+      return fail(res, 400, 'missing_input', 'Add a product URL or a product description.');
+    }
+
+    // Only publicly readable pages: a blocked or failing fetch is reported as
+    // unavailable instead of being silently invented.
+    let pageText = '';
+    let pageError = '';
+    if (url) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
+        const pageRes = await fetch(url, {
+          signal: controller.signal,
+          redirect: 'follow',
+          headers: { 'user-agent': 'OpenClipsAI/1.0 (+campaign research; respects robots.txt)' },
+        });
+        clearTimeout(timer);
+        if (!pageRes.ok) {
+          pageError = `The site answered HTTP ${pageRes.status}, so its content was not read.`;
+        } else {
+          const html = (await pageRes.text()).slice(0, 400000);
+          pageText = html
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 7000);
+          if (pageText.length < 80) {
+            pageError = 'The page returned almost no readable text (likely JavaScript-rendered or blocked).';
+            pageText = '';
+          }
+        }
+      } catch (err) {
+        pageError = `Could not read the page: ${err.name === 'AbortError' ? 'request timed out' : err.message}`;
+      }
+    }
+
+    const prompt = [
+      'You are a marketing strategist. Using ONLY the material below, write a campaign brief.',
+      'Return strict JSON with keys: summary (string), benefits (string[]), audience (string[]),',
+      'angles (string[]), hooks (string[]), script (string, 120-180 words, spoken style),',
+      'ctas (string[]), hashtags (string[] without #), ideas (string[]).',
+      'Never invent product claims, prices or statistics that are not in the material.',
+      title ? `Campaign: ${title}` : '',
+      audience ? `Intended audience: ${audience}` : '',
+      affiliate ? `Offer / affiliate details: ${affiliate}` : '',
+      description ? `Product description from the user: ${description}` : '',
+      pageText ? `Public page text: ${pageText}` : '',
+      pageError ? `Note: ${pageError}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    let payload;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 45000);
+      const aiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, responseMimeType: 'application/json' },
+          }),
+        },
+      );
+      clearTimeout(timer);
+      payload = await aiRes.json().catch(() => null);
+      if (!aiRes.ok) {
+        const msg = payload?.error?.message || `AI provider answered HTTP ${aiRes.status}`;
+        return fail(res, 502, 'ai_provider_error', msg);
+      }
+    } catch (err) {
+      return fail(res, 502, 'ai_provider_unreachable', `Could not reach the AI provider: ${err.message}`);
+    }
+
+    const text = payload?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+    let brief = null;
+    try {
+      brief = JSON.parse(text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim());
+    } catch {
+      return fail(res, 502, 'ai_bad_response', 'The AI provider returned a response that was not valid JSON.');
+    }
+    return sendJson(res, 200, {
+      ok: true,
+      brief,
+      pageRead: !!pageText,
+      pageError,
+      model,
+    });
+  }
+
   // --- campaigns -----------------------------------------------------------
   if (resource === 'campaigns') {
     if (method === 'GET') return sendJson(res, 200, { campaigns: state.campaigns });
