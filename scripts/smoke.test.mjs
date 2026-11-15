@@ -85,7 +85,8 @@ test('control plane: state, persistence, honest failures, secret hygiene', async
   await t.test('engine routes report BACKEND NOT CONFIGURED instead of faking work', async () => {
     const { res, body } = await getJson('/api/process', { method: 'POST' });
     assert.equal(res.status, 503);
-    assert.equal(body.error, 'backend_not_configured');
+    assert.equal(body.error.code, 'backend_not_configured');
+    assert.match(body.error.message, /No OpenShorts processing backend/);
   });
 
   await t.test('campaign research refuses without a stored provider key', async () => {
@@ -95,8 +96,8 @@ test('control plane: state, persistence, honest failures, secret hygiene', async
       body: JSON.stringify({ url: 'https://example.com' }),
     });
     assert.equal(res.status, 400);
-    assert.equal(body.error, 'setup_required');
-    assert.match(body.message, /SETUP REQUIRED/);
+    assert.equal(body.error.code, 'setup_required');
+    assert.match(body.error.message, /SETUP REQUIRED/);
   });
 
   await t.test('settings save, re-read and survive a server restart', async () => {
