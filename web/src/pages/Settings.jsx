@@ -148,7 +148,7 @@ export default function Settings({ go }) {
           title="Application defaults"
           sub="Used to pre-fill every new project"
           action={<button type="button" className="btn primary sm" onClick={persist} disabled={busy === 'save'}>
-            {busy === 'save' ? <Spinner size={14} /> : <Save size={14} />} Save settings
+            {busy === 'save' ? <Spinner size={14} /> : <Save size={14} />} Save defaults
           </button>}
         />
         {error ? <Banner tone="err" icon={AlertTriangle}>{error}</Banner> : null}
@@ -326,7 +326,7 @@ export default function Settings({ go }) {
 
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn primary" onClick={persist} disabled={busy === 'save'}>
-          {busy === 'save' ? <Spinner size={14} /> : <Save size={14} />} Save settings
+          {busy === 'save' ? <Spinner size={14} /> : <Save size={14} />} Save all settings
         </button>
       </div>
     </div>
