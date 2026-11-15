@@ -40,7 +40,7 @@ export default function Dashboard({ go }) {
         </Banner>
       ) : null}
 
-      <div className="grid-4">
+      <div className="g4">
         <Stat label="Videos processed" value={totals.videosProcessed ?? 0} foot={`${projects.length} project${projects.length === 1 ? '' : 's'} saved`} />
         <Stat label="Clips generated" value={totals.clipsGenerated ?? 0} foot="Rendered by the engine" />
         <Stat label="Clips published" value={totals.clipsPublished ?? 0} foot={totals.scheduledPosts ? `${totals.scheduledPosts} scheduled` : 'Nothing scheduled'} />
@@ -51,20 +51,20 @@ export default function Dashboard({ go }) {
         />
       </div>
 
-      <div className="grid-2">
+      <div className="g2">
         <Card>
           <CardHeader icon={Sparkles} title="Start here" sub="Import, clip, publish" />
-          <div className="stack-sm">
-            <button type="button" className="row-btn" onClick={() => go('new')}>
+          <div className="stack">
+            <button type="button" className="btn block" onClick={() => go('new')}>
               <Plus size={16} /> New clipping project <ArrowUpRight size={14} style={{ marginLeft: 'auto' }} />
             </button>
-            <button type="button" className="row-btn" onClick={() => go('clips')}>
+            <button type="button" className="btn block" onClick={() => go('clips')}>
               <Film size={16} /> Browse my clips <ArrowUpRight size={14} style={{ marginLeft: 'auto' }} />
             </button>
-            <button type="button" className="row-btn" onClick={() => go('campaigns')}>
+            <button type="button" className="btn block" onClick={() => go('campaigns')}>
               <BarChart3 size={16} /> Research a campaign <ArrowUpRight size={14} style={{ marginLeft: 'auto' }} />
             </button>
-            <button type="button" className="row-btn" onClick={() => go('calendar')}>
+            <button type="button" className="btn block" onClick={() => go('calendar')}>
               <CalendarDays size={16} /> Publishing calendar <ArrowUpRight size={14} style={{ marginLeft: 'auto' }} />
             </button>
           </div>
@@ -72,7 +72,7 @@ export default function Dashboard({ go }) {
 
         <Card>
           <CardHeader icon={Server} title="Connections" sub="Live status, not assumptions" />
-          <div className="stack-sm">
+          <div className="stack">
             <div className="between">
               <span className="small muted">Processing backend</span>
               <Badge tone={engine.status === 'online' ? 'ok' : backend.configured ? 'warn' : 'err'}>
@@ -122,7 +122,7 @@ export default function Dashboard({ go }) {
             }
           />
         ) : (
-          <div className="stack-sm">
+          <div className="stack">
             {recent.map((p) => (
               <div key={p.id} className="row">
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -146,7 +146,7 @@ export default function Dashboard({ go }) {
         {!posts.length ? (
           <Empty icon={CalendarDays} title="Nothing queued" sub="Publish or schedule a clip from the calendar to see it here." />
         ) : (
-          <div className="stack-sm">
+          <div className="stack">
             {posts.slice(0, 5).map((post) => (
               <div key={post.id} className="row">
                 <div style={{ minWidth: 0, flex: 1 }}>
